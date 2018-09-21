@@ -27,6 +27,10 @@ type Instruction struct {
 	Args      []GraphQLArg
 }
 
+func isZeroOfUnderlyingType(x interface{}) bool {
+	return reflect.DeepEqual(x, reflect.Zero(reflect.TypeOf(x)).Interface())
+}
+
 func isArray(i interface{}) bool {
 	v := reflect.ValueOf(i)
 	switch v.Kind() {
