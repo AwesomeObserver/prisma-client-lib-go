@@ -7,14 +7,12 @@ import (
 	"reflect"
 )
 
-// GraphQLField docs
 type GraphQLField struct {
 	Name       string
 	TypeName   string
 	TypeFields []string
 }
 
-// GraphQLArg docs
 type GraphQLArg struct {
 	Name     string
 	Key      string
@@ -22,7 +20,6 @@ type GraphQLArg struct {
 	Value    interface{}
 }
 
-// Instruction docs
 type Instruction struct {
 	Name      string
 	Field     GraphQLField
@@ -67,13 +64,11 @@ type Client struct {
 	Exists   Exists
 }
 
-// Exists docs
 type Exists struct {
 	Endpoint string
 	Debug    bool
 }
 
-// ProcessInstructions docs
 func (client *Client) ProcessInstructions(stack []Instruction) string {
 	query := make(map[string]interface{})
 	argsByInstruction := make(map[string][]GraphQLArg)
