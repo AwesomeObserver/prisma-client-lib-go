@@ -30,9 +30,6 @@ type Instruction struct {
 	Args      []GraphQLArg
 }
 
-func isZeroOfUnderlyingType(x interface{}) bool {
-	return reflect.DeepEqual(x, reflect.Zero(reflect.TypeOf(x)).Interface())
-}
 func isArray(i interface{}) bool {
 	v := reflect.ValueOf(i)
 	switch v.Kind() {
@@ -90,18 +87,14 @@ func (client *Client) ProcessInstructions(stack []Instruction) string {
 		if len(query) == 0 {
 			query[instruction.Name] = instruction.Field.TypeFields
 			argsByInstruction[instruction.Name] = instruction.Args
-			for _, arg := range instruction.Args {
-				allArgs = append(allArgs, arg)
-			}
+			allArgs = append(allArgs, instruction.Args...)
 		} else {
 			previousInstruction := stack[i+1]
 			query[instruction.Name] = map[string]interface{}{
 				previousInstruction.Name: query[previousInstruction.Name],
 			}
 			argsByInstruction[instruction.Name] = instruction.Args
-			for _, arg := range instruction.Args {
-				allArgs = append(allArgs, arg)
-			}
+			allArgs = append(allArgs, instruction.Args...)
 			delete(query, previousInstruction.Name)
 		}
 	}
