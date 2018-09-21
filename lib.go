@@ -51,20 +51,10 @@ func New(options *Options) Client {
 	return Client{
 		Endpoint: options.Endpoint,
 		Debug:    options.Debug,
-		Exists: Exists{
-			Endpoint: options.Endpoint,
-			Debug:    options.Debug,
-		},
 	}
 }
 
 type Client struct {
-	Endpoint string
-	Debug    bool
-	Exists   Exists
-}
-
-type Exists struct {
 	Endpoint string
 	Debug    bool
 }
