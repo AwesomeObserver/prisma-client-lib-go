@@ -42,12 +42,12 @@ func isArray(i interface{}) bool {
 	}
 }
 
-type PrismaOptions struct {
+type Options struct {
 	Endpoint string
 	Debug    bool
 }
 
-func New(options *PrismaOptions) Client {
+func New(options *Options) Client {
 	if options == nil {
 		return Client{}
 	}
