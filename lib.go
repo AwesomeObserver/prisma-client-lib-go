@@ -2,9 +2,12 @@ package prisma
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"html/template"
 	"reflect"
+
+	"github.com/machinebox/graphql"
 )
 
 type GraphQLField struct {
@@ -27,11 +30,11 @@ type Instruction struct {
 	Args      []GraphQLArg
 }
 
-func isZeroOfUnderlyingType(x interface{}) bool {
+func IsZeroOfUnderlyingType(x interface{}) bool {
 	return reflect.DeepEqual(x, reflect.Zero(reflect.TypeOf(x)).Interface())
 }
 
-func isArray(i interface{}) bool {
+func IsArray(i interface{}) bool {
 	v := reflect.ValueOf(i)
 	switch v.Kind() {
 	case reflect.Array:
@@ -55,22 +58,36 @@ func New(options *Options) Client {
 	return Client{
 		Endpoint: options.Endpoint,
 		Debug:    options.Debug,
-		Exists: Exists{
-			Endpoint: options.Endpoint,
-			Debug:    options.Debug,
-		},
 	}
 }
 
 type Client struct {
 	Endpoint string
 	Debug    bool
-	Exists   Exists
 }
 
-type Exists struct {
-	Endpoint string
-	Debug    bool
+// GraphQL Send a GraphQL operation request
+func (client Client) GraphQL(query string, variables map[string]interface{}) (map[string]interface{}, error) {
+	// TODO: Add auth support
+
+	req := graphql.NewRequest(query)
+	gqlClient := graphql.NewClient(client.Endpoint)
+
+	for key, value := range variables {
+		req.Var(key, value)
+	}
+
+	ctx := context.Background()
+
+	// var respData ResponseStruct
+	var respData map[string]interface{}
+	if err := gqlClient.Run(ctx, req, &respData); err != nil {
+		if client.Debug {
+			fmt.Println("GraphQL Response:", respData)
+		}
+		return nil, err
+	}
+	return respData, nil
 }
 
 func (client *Client) ProcessInstructions(stack []Instruction) string {
@@ -201,7 +218,7 @@ func (client *Client) ProcessInstructions(stack []Instruction) string {
     }
   `
 	templateFunctions := template.FuncMap{
-		"isArray": isArray,
+		"isArray": IsArray,
 	}
 	queryTemplate, err := template.New("query").Funcs(templateFunctions).Parse(queryTemplateString)
 	var queryBytes bytes.Buffer
