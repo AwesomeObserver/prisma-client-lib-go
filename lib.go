@@ -10,6 +10,11 @@ import (
 	"github.com/machinebox/graphql"
 )
 
+type Exec struct {
+	Client *Client
+	Stack  []Instruction
+}
+
 type GraphQLField struct {
 	Name       string
 	TypeName   string
