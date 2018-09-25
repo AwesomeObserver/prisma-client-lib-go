@@ -97,6 +97,9 @@ func (client *Client) ProcessInstructions(stack []Instruction) string {
 	argsByInstruction := make(map[string][]GraphQLArg)
 	var allArgs []GraphQLArg
 	firstInstruction := stack[0]
+
+	// XXX why are we walking over the stack backwards? can't we just
+	// walk it forwards and construct the AST?
 	for i := len(stack) - 1; i >= 0; i-- {
 		instruction := stack[i]
 		if client.Debug {
@@ -146,6 +149,7 @@ func (client *Client) ProcessInstructions(stack []Instruction) string {
 
 	var fn func(root fielder, query map[string]interface{})
 	fn = func(root fielder, query map[string]interface{}) {
+		// XXX can len(query) ever be larger than 1?
 		for k, v := range query {
 			q := ObjectField{
 				name: k,
