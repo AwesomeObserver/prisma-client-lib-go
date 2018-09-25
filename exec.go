@@ -1,6 +1,7 @@
 package prisma
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 	"strconv"
@@ -8,7 +9,47 @@ import (
 	"github.com/mitchellh/mapstructure"
 )
 
-func (exec *Exec) Exec(v interface{}) error {
+func (client *Client) decode(exec *Exec, data map[string]interface{}, v interface{}) error {
+	var genericData interface{} // This can handle both map[string]interface{} and []interface[]
+
+	// Is unpacking needed
+	dataType := reflect.TypeOf(data)
+	// XXX this condition is always true, data is statically known to be a map, not an array
+	if !IsArray(dataType) {
+		unpackedData := data
+		for _, instruction := range exec.Stack {
+			if exec.Client.Debug {
+				fmt.Println("Original Unpacked Data Step Exec:", unpackedData)
+			}
+			if IsArray(unpackedData[instruction.Name]) {
+				genericData = (unpackedData[instruction.Name]).([]interface{})
+				break
+			} else {
+				unpackedData = (unpackedData[instruction.Name]).(map[string]interface{})
+			}
+			if exec.Client.Debug {
+				fmt.Println("Partially Unpacked Data Step Exec:", unpackedData)
+			}
+			if exec.Client.Debug {
+				fmt.Println("Unpacked Data Step Instruction Exec:", instruction.Name)
+				fmt.Println("Unpacked Data Step Exec:", unpackedData)
+				fmt.Println("Unpacked Data Step Type Exec:", reflect.TypeOf(unpackedData))
+			}
+			genericData = unpackedData
+		}
+	}
+	if exec.Client.Debug {
+		fmt.Println("Data Unpacked Exec:", genericData)
+	}
+
+	err := mapstructure.Decode(genericData, v)
+	if exec.Client.Debug {
+		fmt.Println("Data Exec Decoded:", v)
+	}
+	return err
+}
+
+func (exec *Exec) Exec(ctx context.Context, v interface{}) error {
 	var allArgs []GraphQLArg
 	variables := make(map[string]interface{})
 	for i := range exec.Stack {
@@ -47,7 +88,7 @@ func (exec *Exec) Exec(v interface{}) error {
 		fmt.Println("Query Exec:", query)
 		fmt.Println("Variables Exec:", variables)
 	}
-	data, err := exec.Client.GraphQL(query, variables)
+	data, err := exec.Client.GraphQL(ctx, query, variables)
 	if exec.Client.Debug {
 		fmt.Println("Data Exec:", data)
 		fmt.Println("Error Exec:", err)
@@ -56,40 +97,32 @@ func (exec *Exec) Exec(v interface{}) error {
 		return err
 	}
 
-	var genericData interface{} // This can handle both map[string]interface{} and []interface[]
+	return exec.Client.decode(exec, data, v)
+}
 
-	// Is unpacking needed
-	dataType := reflect.TypeOf(data)
-	if !IsArray(dataType) {
-		unpackedData := data
-		for _, instruction := range exec.Stack {
+func (exec *Exec) ExecArray(ctx context.Context, v interface{}) error {
+	query := exec.Client.ProcessInstructions(exec.Stack)
+	variables := make(map[string]interface{})
+	for _, instruction := range exec.Stack {
+		if exec.Client.Debug {
+			fmt.Println("Instruction Exec: ", instruction)
+		}
+		for _, arg := range instruction.Args {
 			if exec.Client.Debug {
-				fmt.Println("Original Unpacked Data Step Exec:", unpackedData)
+				fmt.Println("Instruction Arg Exec: ", instruction)
 			}
-			if IsArray(unpackedData[instruction.Name]) {
-				genericData = (unpackedData[instruction.Name]).([]interface{})
-				break
-			} else {
-				unpackedData = (unpackedData[instruction.Name]).(map[string]interface{})
-			}
-			if exec.Client.Debug {
-				fmt.Println("Partially Unpacked Data Step Exec:", unpackedData)
-			}
-			if exec.Client.Debug {
-				fmt.Println("Unpacked Data Step Instruction Exec:", instruction.Name)
-				fmt.Println("Unpacked Data Step Exec:", unpackedData)
-				fmt.Println("Unpacked Data Step Type Exec:", reflect.TypeOf(unpackedData))
-			}
-			genericData = unpackedData
+			variables[arg.Name] = arg.Value
 		}
 	}
 	if exec.Client.Debug {
-		fmt.Println("Data Unpacked Exec:", genericData)
+		fmt.Println("Query Exec:", query)
+		fmt.Println("Variables Exec:", variables)
+	}
+	data, err := exec.Client.GraphQL(ctx, query, variables)
+	if exec.Client.Debug {
+		fmt.Println("Data Exec:", data)
+		fmt.Println("Error Exec:", err)
 	}
 
-	err = mapstructure.Decode(genericData, v)
-	if exec.Client.Debug {
-		fmt.Println("Data Exec Decoded:", v)
-	}
-	return err
+	return exec.Client.decode(exec, data, v)
 }
