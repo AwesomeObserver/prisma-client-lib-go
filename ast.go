@@ -8,10 +8,14 @@ import (
 type operationType uint8
 
 const (
-	query operationType = iota + 1
-	mutation
-	subscription
+	opQuery operationType = iota + 1
+	opMutation
+	opSubscription
 )
+
+type fielder interface {
+	addField(field)
+}
 
 type argumentList []argument
 
@@ -47,6 +51,10 @@ type operation struct {
 	fields    fieldList
 }
 
+func (op *operation) addField(f field) {
+	op.fields = append(op.fields, f)
+}
+
 type argument struct {
 	name  string
 	value string
@@ -57,11 +65,11 @@ func formatOperation(op *operation) (string, error) {
 
 	b := &strings.Builder{}
 	switch op.typ {
-	case query:
+	case opQuery:
 		b.WriteString("query")
-	case mutation:
+	case opMutation:
 		b.WriteString("mutation")
-	case subscription:
+	case opSubscription:
 		b.WriteString("subscription")
 	default:
 		return "", fmt.Errorf("invalid operation type %q", op.typ)
@@ -100,11 +108,15 @@ type ObjectField struct {
 	fields    fieldList
 }
 
-func (f ObjectField) format(b *strings.Builder) {
-	b.WriteString(f.name)
-	f.arguments.format(b)
+func (of *ObjectField) addField(f field) {
+	of.fields = append(of.fields, f)
+}
+
+func (of ObjectField) format(b *strings.Builder) {
+	b.WriteString(of.name)
+	of.arguments.format(b)
 	b.WriteString(" {\n")
-	f.fields.format(b)
+	of.fields.format(b)
 	b.WriteString("}")
 }
 

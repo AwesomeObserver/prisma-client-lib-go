@@ -1,10 +1,8 @@
 package prisma
 
 import (
-	"bytes"
 	"context"
 	"fmt"
-	"html/template"
 	"reflect"
 
 	"github.com/machinebox/graphql"
@@ -39,6 +37,7 @@ func IsZeroOfUnderlyingType(x interface{}) bool {
 	return reflect.DeepEqual(x, reflect.Zero(reflect.TypeOf(x)).Interface())
 }
 
+// TODO(dh): get rid of this function if we can
 func IsArray(i interface{}) bool {
 	v := reflect.ValueOf(i)
 	switch v.Kind() {
@@ -124,123 +123,67 @@ func (client *Client) ProcessInstructions(stack []Instruction) string {
 		fmt.Println("Final Args By Instruction:", argsByInstruction)
 		fmt.Println("Final All Args:", allArgs)
 	}
-	// TODO: Make this recursive - current depth = 3
-	queryTemplateString := `
-  {{ $.operation }} {{ $.operationName }} 
-  	{{- if eq (len $.allArgs) 0 }} {{ else }} ( {{ end }}
-    	{{- range $_, $arg := $.allArgs }}
-			\${{ $arg.Name }}: {{ $arg.TypeName }}, 
-		{{- end }}
-	{{- if eq (len $.allArgs) 0 }} {{ else }} ) {{ end }}
-    {
-    {{- range $k, $v := $.query }}
-    {{- if isArray $v }}
-	  {{- $k }}
-	  {{- range $argKey, $argValue := $.argsByInstruction }}
-	  {{- if eq $argKey $k }}
-	  	{{- if eq (len $argValue) 0 }} {{ else }} ( {{ end }}
-				{{- range $k, $arg := $argValue}}
-					{{ $arg.Key }}: \${{ $arg.Name }},
-				{{- end }}
-		{{- if eq (len $argValue) 0 }} {{ else }} ) {{ end }}
-			{{- end }}
-		{{- end }}
-	  {
-        {{- range $k1, $v1 := $v }}
-          {{ $v1 }}
-        {{end}}
-      }
-    {{- else }}
-	  {{ $k }} 
-	  {{- range $argKey, $argValue := $.argsByInstruction }}
-	  	{{- if eq $argKey $k }}
-	  		{{- if eq (len $argValue) 0 }} {{ else }} ( {{ end }}
-            {{- range $k, $arg := $argValue}}
-              {{ $arg.Key }}: \${{ $arg.Name }},
-            {{- end }}
-			{{- if eq (len $argValue) 0 }} {{ else }} ) {{ end }}
-          {{- end }}
-        {{- end }}
-		{
-        {{- range $k, $v := $v }}
-        {{- if isArray $v }}
-		  {{ $k }} 
-		  {{- range $argKey, $argValue := $.argsByInstruction }}
-		  {{- if eq $argKey $k }}
-			{{- if eq (len $argValue) 0 }} {{ else }} ( {{ end }}
-                {{- range $k, $arg := $argValue}}
-                  {{ $arg.Key }}: \${{ $arg.Name }},
-                {{- end }}
-				{{- if eq (len $argValue) 0 }} {{ else }} ) {{ end }} 
-              {{- end }}
-            {{- end }}
-			{ 
-            {{- range $k1, $v1 := $v }}
-              {{ $v1 }}
-            {{end}}
-          }
-        {{- else }}
-		  {{ $k }} 
-		  {{- range $argKey, $argValue := $.argsByInstruction }}
-		  {{- if eq $argKey $k }}
-		  	{{- if eq (len $argValue) 0 }} {{ else }} ( {{ end }}
-                {{- range $k, $arg := $argValue}}
-                  {{ $arg.Key }}: \${{ $arg.Name }},
-                {{- end }}
-				{{- if eq (len $argValue) 0 }} {{ else }} ) {{ end }} 
-              {{- end }}
-            {{- end }}
-			{
-            {{- range $k, $v := $v }}
-              {{- if isArray $v }}
-                {{ $k }} { 
-                  {{- range $k1, $v1 := $v }}
-                    {{ $v1 }}
-                  {{end}}
-                }
-              {{- else }}
-				{{ $k }} 
-				{{- range $argKey, $argValue := $.argsByInstruction }}
-				{{- if eq $argKey $k }}
-					{{- if eq (len $argValue) 0 }} {{ else }} ( {{ end }}
-                      {{- range $k, $arg := $argValue}}
-                        {{ $arg.Key }}: \${{ $arg.Name }},
-                      {{- end }}
-					  {{- if eq (len $argValue) 0 }} {{ else }} ) {{ end }} 
-                    {{- end }}
-                  {{- end }}
-				  {
-                  id
-                }
-              {{- end }}
-              {{- end }}
-          }
-        {{- end }}
-        {{- end }}
-      }
-    {{- end }}
-    {{- end }}
-    }
-  `
-	templateFunctions := template.FuncMap{
-		"isArray": IsArray,
+
+	var opTyp operationType
+	switch firstInstruction.Operation {
+	case "query":
+		opTyp = opQuery
+	case "mutation":
+		opTyp = opMutation
+	case "subscription":
+		opTyp = opSubscription
+	default:
+		// XXX return error
 	}
-	queryTemplate, err := template.New("query").Funcs(templateFunctions).Parse(queryTemplateString)
-	var queryBytes bytes.Buffer
-	var data = make(map[string]interface{})
-	data = map[string]interface{}{
-		"query":             query,
-		"argsByInstruction": argsByInstruction,
-		"allArgs":           allArgs,
-		"operation":         firstInstruction.Operation,
-		"operationName":     firstInstruction.Name,
+	op := operation{
+		typ:  opTyp,
+		name: firstInstruction.Name,
 	}
-	queryTemplate.Execute(&queryBytes, data)
+	for _, arg := range allArgs {
+		op.arguments = append(op.arguments, argument{
+			name:  "$" + arg.Name,
+			value: arg.TypeName,
+		})
+	}
+
+	var fn func(root fielder, query map[string]interface{})
+	fn = func(root fielder, query map[string]interface{}) {
+		for k, v := range query {
+			q := ObjectField{
+				name: k,
+			}
+			args := argsByInstruction[k]
+			for _, arg := range args {
+				q.arguments = append(q.arguments, argument{
+					name:  arg.Key,
+					value: "$" + arg.Name,
+				})
+			}
+			// TODO(dh): redesign the whole instruction processing step,
+			// avoid excessive use of interface{} and maps
+			switch v := v.(type) {
+			case []string:
+				for _, f := range v {
+					q.fields = append(q.fields, ScalarField{
+						name: f,
+					})
+				}
+			case map[string]interface{}:
+				fn(&q, v)
+			default:
+				panic(fmt.Sprintf("unexpected type %T", v))
+			}
+			root.addField(q)
+		}
+	}
+	fn(&op, query)
+
+	q, err := formatOperation(&op)
+	if err != nil {
+		// XXX return error
+	}
 	if client.Debug {
-		fmt.Println("Query String: ", queryBytes.String())
+		fmt.Println("Query String:", q)
 	}
-	if err == nil {
-		return queryBytes.String()
-	}
-	return "Failed to generate query"
+	return q
 }
