@@ -115,3 +115,31 @@ func (client *Client) GetMany(params *WhereParams, typeNames [3]string, instrNam
 		Stack:  stack,
 	}
 }
+
+func (client *Client) Node(id interface{}) *Exec {
+	var args []GraphQLArg
+	if id != nil {
+		args = append(args, GraphQLArg{
+			Name:     "id",
+			Key:      "id",
+			TypeName: "ID!",
+			Value:    id,
+		})
+	}
+
+	stack := []Instruction{{
+		Name: "node",
+		Field: GraphQLField{
+			Name:       "node",
+			TypeName:   "Node",
+			TypeFields: []string{},
+		},
+		Operation: "query",
+		Args:      args,
+	}}
+
+	return &Exec{
+		Client: client,
+		Stack:  stack,
+	}
+}
