@@ -1,6 +1,7 @@
 package prisma
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 	"strconv"
@@ -19,7 +20,7 @@ type BatchPayload struct {
 }
 
 // Exec docs
-func (instance BatchPayloadExec) Exec() (BatchPayload, error) {
+func (instance BatchPayloadExec) Exec(ctx context.Context) (BatchPayload, error) {
 	var allArgs []GraphQLArg
 	variables := make(map[string]interface{})
 	for instructionKey := range instance.stack {
@@ -58,7 +59,7 @@ func (instance BatchPayloadExec) Exec() (BatchPayload, error) {
 		fmt.Println("Query Exec:", query)
 		fmt.Println("Variables Exec:", variables)
 	}
-	data, err := instance.client.GraphQL(query, variables)
+	data, err := instance.client.GraphQL(ctx, query, variables)
 	if instance.client.Debug {
 		fmt.Println("Data Exec:", data)
 		fmt.Println("Error Exec:", err)

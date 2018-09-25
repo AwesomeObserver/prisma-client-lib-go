@@ -71,7 +71,7 @@ type Client struct {
 }
 
 // GraphQL Send a GraphQL operation request
-func (client Client) GraphQL(query string, variables map[string]interface{}) (map[string]interface{}, error) {
+func (client Client) GraphQL(ctx context.Context, query string, variables map[string]interface{}) (map[string]interface{}, error) {
 	// TODO: Add auth support
 
 	req := graphql.NewRequest(query)
@@ -80,8 +80,6 @@ func (client Client) GraphQL(query string, variables map[string]interface{}) (ma
 	for key, value := range variables {
 		req.Var(key, value)
 	}
-
-	ctx := context.Background()
 
 	// var respData ResponseStruct
 	var respData map[string]interface{}
