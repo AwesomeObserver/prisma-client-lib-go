@@ -2,7 +2,6 @@ package prisma
 
 import (
 	"context"
-	"fmt"
 	"reflect"
 	"strconv"
 
@@ -25,14 +24,8 @@ func (instance BatchPayloadExec) Exec(ctx context.Context) (BatchPayload, error)
 	variables := make(map[string]interface{})
 	for instructionKey := range instance.stack {
 		instruction := &instance.stack[instructionKey]
-		if instance.client.Debug {
-			fmt.Println("Instruction Exec: ", instruction)
-		}
 		for argKey := range instruction.Args {
 			arg := &instruction.Args[argKey]
-			if instance.client.Debug {
-				fmt.Println("Instruction Arg Exec: ", instruction)
-			}
 			isUnique := false
 			for !isUnique {
 				isUnique = true
@@ -40,30 +33,16 @@ func (instance BatchPayloadExec) Exec(ctx context.Context) (BatchPayload, error)
 					if existingArg.Name == arg.Name {
 						isUnique = false
 						arg.Name = arg.Name + "_" + strconv.Itoa(key)
-						if instance.client.Debug {
-							fmt.Println("Resolving Collision Arg Name: ", arg.Name)
-						}
 						break
 					}
 				}
-			}
-			if instance.client.Debug {
-				fmt.Println("Arg Name: ", arg.Name)
 			}
 			allArgs = append(allArgs, *arg)
 			variables[arg.Name] = arg.Value
 		}
 	}
 	query := instance.client.ProcessInstructions(instance.stack)
-	if instance.client.Debug {
-		fmt.Println("Query Exec:", query)
-		fmt.Println("Variables Exec:", variables)
-	}
 	data, err := instance.client.GraphQL(ctx, query, variables)
-	if instance.client.Debug {
-		fmt.Println("Data Exec:", data)
-		fmt.Println("Error Exec:", err)
-	}
 
 	var genericData interface{} // This can handle both map[string]interface{} and []interface[]
 
@@ -72,35 +51,18 @@ func (instance BatchPayloadExec) Exec(ctx context.Context) (BatchPayload, error)
 	if !IsArray(dataType) {
 		unpackedData := data
 		for _, instruction := range instance.stack {
-			if instance.client.Debug {
-				fmt.Println("Original Unpacked Data Step Exec:", unpackedData)
-			}
 			if IsArray(unpackedData[instruction.Name]) {
 				genericData = (unpackedData[instruction.Name]).([]interface{})
 				break
 			} else {
 				unpackedData = (unpackedData[instruction.Name]).(map[string]interface{})
 			}
-			if instance.client.Debug {
-				fmt.Println("Partially Unpacked Data Step Exec:", unpackedData)
-			}
-			if instance.client.Debug {
-				fmt.Println("Unpacked Data Step Instruction Exec:", instruction.Name)
-				fmt.Println("Unpacked Data Step Exec:", unpackedData)
-				fmt.Println("Unpacked Data Step Type Exec:", reflect.TypeOf(unpackedData))
-			}
 			genericData = unpackedData
 		}
-	}
-	if instance.client.Debug {
-		fmt.Println("Data Unpacked Exec:", genericData)
 	}
 
 	var decodedData BatchPayload
 	mapstructure.Decode(genericData, &decodedData)
-	if instance.client.Debug {
-		fmt.Println("Data Exec Decoded:", decodedData)
-	}
 	return decodedData, err
 }
 

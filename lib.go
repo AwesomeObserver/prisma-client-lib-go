@@ -84,9 +84,6 @@ func (client Client) GraphQL(ctx context.Context, query string, variables map[st
 	// var respData ResponseStruct
 	var respData map[string]interface{}
 	if err := gqlClient.Run(ctx, req, &respData); err != nil {
-		if client.Debug {
-			fmt.Println("GraphQL Response:", respData)
-		}
 		return nil, err
 	}
 	return respData, nil
@@ -102,9 +99,6 @@ func (client *Client) ProcessInstructions(stack []Instruction) string {
 	// walk it forwards and construct the AST?
 	for i := len(stack) - 1; i >= 0; i-- {
 		instruction := stack[i]
-		if client.Debug {
-			fmt.Println("Instruction: ", instruction)
-		}
 		if len(query) == 0 {
 			query[instruction.Name] = instruction.Field.TypeFields
 			argsByInstruction[instruction.Name] = instruction.Args
@@ -118,11 +112,6 @@ func (client *Client) ProcessInstructions(stack []Instruction) string {
 			allArgs = append(allArgs, instruction.Args...)
 			delete(query, previousInstruction.Name)
 		}
-	}
-	if client.Debug {
-		fmt.Println("Final Query:", query)
-		fmt.Println("Final Args By Instruction:", argsByInstruction)
-		fmt.Println("Final All Args:", allArgs)
 	}
 
 	var opTyp operationType
@@ -183,9 +172,6 @@ func (client *Client) ProcessInstructions(stack []Instruction) string {
 	q, err := formatOperation(&op)
 	if err != nil {
 		// XXX return error
-	}
-	if client.Debug {
-		fmt.Println("Query String:", q)
 	}
 	return q
 }
