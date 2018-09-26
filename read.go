@@ -1,6 +1,6 @@
 package prisma
 
-func (client *Client) GetOne(params interface{}, typeNames [2]string, instrName string, typeFields []string) *Exec {
+func (client *Client) GetOne(base *Exec, params interface{}, typeNames [2]string, instrName string, typeFields []string) *Exec {
 	var args []GraphQLArg
 	if params != nil {
 		args = append(args, GraphQLArg{
@@ -11,7 +11,12 @@ func (client *Client) GetOne(params interface{}, typeNames [2]string, instrName 
 		})
 	}
 
-	stack := []Instruction{{
+	var stack []Instruction
+	if base != nil {
+		stack = make([]Instruction, len(base.Stack), len(base.Stack)+1)
+		copy(stack, base.Stack)
+	}
+	stack = append(stack, Instruction{
 		Name: instrName,
 		Field: GraphQLField{
 			Name:       instrName,
@@ -20,7 +25,7 @@ func (client *Client) GetOne(params interface{}, typeNames [2]string, instrName 
 		},
 		Operation: "query",
 		Args:      args,
-	}}
+	})
 
 	return &Exec{
 		Client: client,
@@ -38,7 +43,7 @@ type WhereParams struct {
 	Last    *int32      `json:"last,omitempty"`
 }
 
-func (client *Client) GetMany(params *WhereParams, typeNames [3]string, instrName string, typeFields []string) *Exec {
+func (client *Client) GetMany(base *Exec, params *WhereParams, typeNames [3]string, instrName string, typeFields []string) *Exec {
 	var args []GraphQLArg
 	if params != nil {
 		if params.Where != nil {
@@ -99,7 +104,12 @@ func (client *Client) GetMany(params *WhereParams, typeNames [3]string, instrNam
 		}
 	}
 
-	stack := []Instruction{{
+	var stack []Instruction
+	if base != nil {
+		stack = make([]Instruction, len(base.Stack), len(base.Stack)+1)
+		copy(stack, base.Stack)
+	}
+	stack = append(stack, Instruction{
 		Name: instrName,
 		Field: GraphQLField{
 			Name:       instrName,
@@ -108,7 +118,7 @@ func (client *Client) GetMany(params *WhereParams, typeNames [3]string, instrNam
 		},
 		Operation: "query",
 		Args:      args,
-	}}
+	})
 
 	return &Exec{
 		Client: client,
