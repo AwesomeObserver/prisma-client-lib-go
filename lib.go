@@ -50,40 +50,30 @@ func IsArray(i interface{}) bool {
 	}
 }
 
-type Options struct {
-	Endpoint string
-	Debug    bool
-}
-
-func New(options *Options) Client {
-	if options == nil {
-		return Client{}
-	}
-	return Client{
-		Endpoint: options.Endpoint,
-		Debug:    options.Debug,
+func New(endpoint string, opts ...graphql.ClientOption) *Client {
+	return &Client{
+		Endpoint:  endpoint,
+		GQLClient: graphql.NewClient(endpoint, opts...),
 	}
 }
 
 type Client struct {
 	Endpoint string
-	Debug    bool
+	// TODO(dh): find a better name for this field
+	GQLClient *graphql.Client
 }
 
 // GraphQL Send a GraphQL operation request
-func (client Client) GraphQL(ctx context.Context, query string, variables map[string]interface{}) (map[string]interface{}, error) {
+func (client *Client) GraphQL(ctx context.Context, query string, variables map[string]interface{}) (map[string]interface{}, error) {
 	// TODO: Add auth support
 
 	req := graphql.NewRequest(query)
-	gqlClient := graphql.NewClient(client.Endpoint)
-
 	for key, value := range variables {
 		req.Var(key, value)
 	}
 
-	// var respData ResponseStruct
 	var respData map[string]interface{}
-	if err := gqlClient.Run(ctx, req, &respData); err != nil {
+	if err := client.GQLClient.Run(ctx, req, &respData); err != nil {
 		return nil, err
 	}
 	return respData, nil
