@@ -13,12 +13,10 @@ type BatchPayloadExec struct {
 	stack  []Instruction
 }
 
-// BatchPayload docs - generated with types
 type BatchPayload struct {
 	Count int64 `json:"count"`
 }
 
-// Exec docs
 func (instance BatchPayloadExec) Exec(ctx context.Context) (BatchPayload, error) {
 	var allArgs []GraphQLArg
 	variables := make(map[string]interface{})
