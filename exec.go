@@ -30,7 +30,7 @@ func (client *Client) decode(exec *Exec, data map[string]interface{}, v interfac
 	return mapstructure.Decode(genericData, v)
 }
 
-func (exec *Exec) Exec(ctx context.Context, v interface{}) error {
+func (exec *Exec) buildQuery() (string, map[string]interface{}) {
 	var allArgs []GraphQLArg
 	variables := make(map[string]interface{})
 	for i := range exec.Stack {
@@ -53,12 +53,32 @@ func (exec *Exec) Exec(ctx context.Context, v interface{}) error {
 		}
 	}
 	query := exec.Client.ProcessInstructions(exec.Stack)
+	return query, variables
+}
+
+func (exec *Exec) Exec(ctx context.Context, v interface{}) error {
+	query, variables := exec.buildQuery()
 	data, err := exec.Client.GraphQL(ctx, query, variables)
 	if err != nil {
 		return err
 	}
 
 	return exec.Client.decode(exec, data, v)
+}
+
+func (exec *Exec) Exists(ctx context.Context) (bool, error) {
+	query, variables := exec.buildQuery()
+	data, err := exec.Client.GraphQL(ctx, query, variables)
+	if err != nil {
+		return false, err
+	}
+	if len(data) == 0 {
+		return false, nil
+	}
+	for _, v := range data {
+		return v != nil, nil
+	}
+	panic("unreachable")
 }
 
 func (exec *Exec) ExecArray(ctx context.Context, v interface{}) error {
