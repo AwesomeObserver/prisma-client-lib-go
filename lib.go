@@ -159,9 +159,5 @@ func (client *Client) ProcessInstructions(stack []Instruction) string {
 	}
 	fn(&op, query)
 
-	q, err := formatOperation(&op)
-	if err != nil {
-		// XXX return error
-	}
-	return q
+	return formatOperation(&op)
 }

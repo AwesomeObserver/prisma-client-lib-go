@@ -60,7 +60,7 @@ type argument struct {
 	value string
 }
 
-func formatOperation(op *operation) (string, error) {
+func formatOperation(op *operation) string {
 	// TODO(dh): verify that all names are valid (e.g. don't contain spaces)
 
 	b := &strings.Builder{}
@@ -72,7 +72,7 @@ func formatOperation(op *operation) (string, error) {
 	case opSubscription:
 		b.WriteString("subscription")
 	default:
-		return "", fmt.Errorf("invalid operation type %q", op.typ)
+		panic(fmt.Sprintf("invalid operation type %q", op.typ))
 	}
 
 	b.WriteByte(' ')
@@ -82,7 +82,7 @@ func formatOperation(op *operation) (string, error) {
 	op.fields.format(b)
 	b.WriteByte('}')
 
-	return b.String(), nil
+	return b.String()
 }
 
 type field interface {
