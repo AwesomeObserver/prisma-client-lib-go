@@ -38,7 +38,7 @@ func IsZeroOfUnderlyingType(x interface{}) bool {
 }
 
 // TODO(dh): get rid of this function if we can
-func IsArray(i interface{}) bool {
+func isArray(i interface{}) bool {
 	v := reflect.ValueOf(i)
 	switch v.Kind() {
 	case reflect.Array:

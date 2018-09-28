@@ -14,10 +14,10 @@ func (client *Client) decode(exec *Exec, data map[string]interface{}, v interfac
 	// Is unpacking needed
 	dataType := reflect.TypeOf(data)
 	// XXX this condition is always true, data is statically known to be a map, not an array
-	if !IsArray(dataType) {
+	if !isArray(dataType) {
 		unpackedData := data
 		for _, instruction := range exec.Stack {
-			if IsArray(unpackedData[instruction.Name]) {
+			if isArray(unpackedData[instruction.Name]) {
 				genericData = (unpackedData[instruction.Name]).([]interface{})
 				break
 			} else {

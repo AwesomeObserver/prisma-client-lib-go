@@ -46,10 +46,10 @@ func (instance BatchPayloadExec) Exec(ctx context.Context) (BatchPayload, error)
 
 	// Is unpacking needed
 	dataType := reflect.TypeOf(data)
-	if !IsArray(dataType) {
+	if !isArray(dataType) {
 		unpackedData := data
 		for _, instruction := range instance.stack {
-			if IsArray(unpackedData[instruction.Name]) {
+			if isArray(unpackedData[instruction.Name]) {
 				genericData = (unpackedData[instruction.Name]).([]interface{})
 				break
 			} else {
