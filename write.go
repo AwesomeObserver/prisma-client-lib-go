@@ -2,7 +2,6 @@ package prisma
 
 import (
 	"context"
-	"reflect"
 	"strconv"
 
 	"github.com/mitchellh/mapstructure"
@@ -47,20 +46,15 @@ func (instance BatchPayloadExec) Exec(ctx context.Context) (BatchPayload, error)
 
 	var genericData interface{} // This can handle both map[string]interface{} and []interface[]
 
-	// Is unpacking needed
-	dataType := reflect.TypeOf(data)
-	// XXX this condition is always true, data is statically known to be a map, not an array
-	if !isArray(dataType) {
-		unpackedData := data
-		for _, instruction := range instance.stack {
-			if isArray(unpackedData[instruction.Name]) {
-				genericData = (unpackedData[instruction.Name]).([]interface{})
-				break
-			} else {
-				unpackedData = (unpackedData[instruction.Name]).(map[string]interface{})
-			}
-			genericData = unpackedData
+	unpackedData := data
+	for _, instruction := range instance.stack {
+		if isArray(unpackedData[instruction.Name]) {
+			genericData = (unpackedData[instruction.Name]).([]interface{})
+			break
+		} else {
+			unpackedData = (unpackedData[instruction.Name]).(map[string]interface{})
 		}
+		genericData = unpackedData
 	}
 
 	var decodedData BatchPayload

@@ -2,7 +2,6 @@ package prisma
 
 import (
 	"context"
-	"reflect"
 	"strconv"
 
 	"github.com/mitchellh/mapstructure"
@@ -11,20 +10,15 @@ import (
 func (client *Client) decode(exec *Exec, data map[string]interface{}, v interface{}) error {
 	var genericData interface{} // This can handle both map[string]interface{} and []interface[]
 
-	// Is unpacking needed
-	dataType := reflect.TypeOf(data)
-	// XXX this condition is always true, data is statically known to be a map, not an array
-	if !isArray(dataType) {
-		unpackedData := data
-		for _, instruction := range exec.Stack {
-			if isArray(unpackedData[instruction.Name]) {
-				genericData = (unpackedData[instruction.Name]).([]interface{})
-				break
-			} else {
-				unpackedData = (unpackedData[instruction.Name]).(map[string]interface{})
-			}
-			genericData = unpackedData
+	unpackedData := data
+	for _, instruction := range exec.Stack {
+		if isArray(unpackedData[instruction.Name]) {
+			genericData = (unpackedData[instruction.Name]).([]interface{})
+			break
+		} else {
+			unpackedData = (unpackedData[instruction.Name]).(map[string]interface{})
 		}
+		genericData = unpackedData
 	}
 
 	return mapstructure.Decode(genericData, v)
