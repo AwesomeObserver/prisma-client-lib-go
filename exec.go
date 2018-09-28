@@ -90,48 +90,16 @@ func (exec *Exec) ExecArray(ctx context.Context, v interface{}) error {
 	return exec.Client.decode(exec, data, v)
 }
 
-func (instance *BatchPayloadExec) Exec(ctx context.Context) (BatchPayload, error) {
-	var allArgs []graphQLArg
-	variables := make(map[string]interface{})
-	for instructionKey := range instance.stack {
-		instruction := &instance.stack[instructionKey]
-		for argKey := range instruction.Args {
-			arg := &instruction.Args[argKey]
-			isUnique := false
-			for !isUnique {
-				isUnique = true
-				for key, existingArg := range allArgs {
-					if existingArg.Name == arg.Name {
-						isUnique = false
-						arg.Name = arg.Name + "_" + strconv.Itoa(key)
-						break
-					}
-				}
-			}
-			allArgs = append(allArgs, *arg)
-			variables[arg.Name] = arg.Value
-		}
-	}
-	query := instance.client.ProcessInstructions(instance.stack)
-	data, err := instance.client.GraphQL(ctx, query, variables)
+func (exec *BatchPayloadExec) Exec(ctx context.Context) (BatchPayload, error) {
+	sexec := &Exec{Stack: exec.stack}
+	query, variables := sexec.buildQuery()
+
+	data, err := exec.client.GraphQL(ctx, query, variables)
 	if err != nil {
 		return BatchPayload{}, err
 	}
 
-	var genericData interface{} // This can handle both map[string]interface{} and []interface[]
-
-	unpackedData := data
-	for _, instruction := range instance.stack {
-		if isArray(unpackedData[instruction.Name]) {
-			genericData = (unpackedData[instruction.Name]).([]interface{})
-			break
-		} else {
-			unpackedData = (unpackedData[instruction.Name]).(map[string]interface{})
-		}
-		genericData = unpackedData
-	}
-
-	var decodedData BatchPayload
-	err = mapstructure.Decode(genericData, &decodedData)
-	return decodedData, err
+	var bp BatchPayload
+	err = exec.client.decode(sexec, data, &bp)
+	return bp, err
 }
