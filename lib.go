@@ -101,7 +101,7 @@ func (client *Client) ProcessInstructions(stack []Instruction) string {
 	}
 
 	var opTyp operationType
-	switch firstInstruction.Operation {
+	switch op := firstInstruction.Operation; op {
 	case "query":
 		opTyp = opQuery
 	case "mutation":
@@ -109,7 +109,7 @@ func (client *Client) ProcessInstructions(stack []Instruction) string {
 	case "subscription":
 		opTyp = opSubscription
 	default:
-		// XXX return error
+		panic(fmt.Sprintf("invalid operation type %q", op))
 	}
 	op := operation{
 		typ:  opTyp,

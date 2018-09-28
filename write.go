@@ -41,11 +41,15 @@ func (instance BatchPayloadExec) Exec(ctx context.Context) (BatchPayload, error)
 	}
 	query := instance.client.ProcessInstructions(instance.stack)
 	data, err := instance.client.GraphQL(ctx, query, variables)
+	if err != nil {
+		return BatchPayload{}, err
+	}
 
 	var genericData interface{} // This can handle both map[string]interface{} and []interface[]
 
 	// Is unpacking needed
 	dataType := reflect.TypeOf(data)
+	// XXX this condition is always true, data is statically known to be a map, not an array
 	if !isArray(dataType) {
 		unpackedData := data
 		for _, instruction := range instance.stack {
@@ -60,7 +64,7 @@ func (instance BatchPayloadExec) Exec(ctx context.Context) (BatchPayload, error)
 	}
 
 	var decodedData BatchPayload
-	mapstructure.Decode(genericData, &decodedData)
+	err = mapstructure.Decode(genericData, &decodedData)
 	return decodedData, err
 }
 
