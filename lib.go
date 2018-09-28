@@ -10,27 +10,27 @@ import (
 
 type Exec struct {
 	Client *Client
-	Stack  []Instruction
+	Stack  []instruction
 }
 
-type GraphQLField struct {
+type graphQLField struct {
 	Name       string
 	TypeName   string
 	TypeFields []string
 }
 
-type GraphQLArg struct {
+type graphQLArg struct {
 	Name     string
 	Key      string
 	TypeName string
 	Value    interface{}
 }
 
-type Instruction struct {
+type instruction struct {
 	Name      string
-	Field     GraphQLField
+	Field     graphQLField
 	Operation string
-	Args      []GraphQLArg
+	Args      []graphQLArg
 }
 
 // TODO(dh): get rid of this function if we can
@@ -75,10 +75,10 @@ func (client *Client) GraphQL(ctx context.Context, query string, variables map[s
 	return respData, nil
 }
 
-func (client *Client) ProcessInstructions(stack []Instruction) string {
+func (client *Client) ProcessInstructions(stack []instruction) string {
 	query := make(map[string]interface{})
-	argsByInstruction := make(map[string][]GraphQLArg)
-	var allArgs []GraphQLArg
+	argsByInstruction := make(map[string][]graphQLArg)
+	var allArgs []graphQLArg
 	firstInstruction := stack[0]
 
 	// XXX why are we walking over the stack backwards? can't we just
@@ -126,7 +126,7 @@ func (client *Client) ProcessInstructions(stack []Instruction) string {
 	fn = func(root fielder, query map[string]interface{}) {
 		// XXX can len(query) ever be larger than 1?
 		for k, v := range query {
-			q := ObjectField{
+			q := objectField{
 				name: k,
 			}
 			args := argsByInstruction[k]
@@ -141,7 +141,7 @@ func (client *Client) ProcessInstructions(stack []Instruction) string {
 			switch v := v.(type) {
 			case []string:
 				for _, f := range v {
-					q.fields = append(q.fields, ScalarField{
+					q.fields = append(q.fields, scalarField{
 						name: f,
 					})
 				}

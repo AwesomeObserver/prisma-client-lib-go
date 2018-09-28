@@ -1,9 +1,9 @@
 package prisma
 
 func (client *Client) GetOne(base *Exec, params interface{}, typeNames [2]string, instrName string, typeFields []string) *Exec {
-	var args []GraphQLArg
+	var args []graphQLArg
 	if params != nil {
-		args = append(args, GraphQLArg{
+		args = append(args, graphQLArg{
 			Name:     "where",
 			Key:      "where",
 			TypeName: typeNames[0],
@@ -11,14 +11,14 @@ func (client *Client) GetOne(base *Exec, params interface{}, typeNames [2]string
 		})
 	}
 
-	var stack []Instruction
+	var stack []instruction
 	if base != nil {
-		stack = make([]Instruction, len(base.Stack), len(base.Stack)+1)
+		stack = make([]instruction, len(base.Stack), len(base.Stack)+1)
 		copy(stack, base.Stack)
 	}
-	stack = append(stack, Instruction{
+	stack = append(stack, instruction{
 		Name: instrName,
-		Field: GraphQLField{
+		Field: graphQLField{
 			Name:       instrName,
 			TypeName:   typeNames[1],
 			TypeFields: typeFields,
@@ -44,10 +44,10 @@ type WhereParams struct {
 }
 
 func (client *Client) GetMany(base *Exec, params *WhereParams, typeNames [3]string, instrName string, typeFields []string) *Exec {
-	var args []GraphQLArg
+	var args []graphQLArg
 	if params != nil {
 		if params.Where != nil {
-			args = append(args, GraphQLArg{
+			args = append(args, graphQLArg{
 				Name:     "where",
 				Key:      "where",
 				TypeName: typeNames[0],
@@ -55,7 +55,7 @@ func (client *Client) GetMany(base *Exec, params *WhereParams, typeNames [3]stri
 			})
 		}
 		if params.OrderBy != nil {
-			args = append(args, GraphQLArg{
+			args = append(args, graphQLArg{
 				Name:     "orderBy",
 				Key:      "orderBy",
 				TypeName: typeNames[1],
@@ -63,7 +63,7 @@ func (client *Client) GetMany(base *Exec, params *WhereParams, typeNames [3]stri
 			})
 		}
 		if params.Skip != nil {
-			args = append(args, GraphQLArg{
+			args = append(args, graphQLArg{
 				Name:     "skip",
 				Key:      "skip",
 				TypeName: "Int",
@@ -71,7 +71,7 @@ func (client *Client) GetMany(base *Exec, params *WhereParams, typeNames [3]stri
 			})
 		}
 		if params.After != nil {
-			args = append(args, GraphQLArg{
+			args = append(args, graphQLArg{
 				Name:     "after",
 				Key:      "after",
 				TypeName: "String",
@@ -79,7 +79,7 @@ func (client *Client) GetMany(base *Exec, params *WhereParams, typeNames [3]stri
 			})
 		}
 		if params.Before != nil {
-			args = append(args, GraphQLArg{
+			args = append(args, graphQLArg{
 				Name:     "before",
 				Key:      "before",
 				TypeName: "String",
@@ -87,7 +87,7 @@ func (client *Client) GetMany(base *Exec, params *WhereParams, typeNames [3]stri
 			})
 		}
 		if params.First != nil {
-			args = append(args, GraphQLArg{
+			args = append(args, graphQLArg{
 				Name:     "first",
 				Key:      "first",
 				TypeName: "Int",
@@ -95,7 +95,7 @@ func (client *Client) GetMany(base *Exec, params *WhereParams, typeNames [3]stri
 			})
 		}
 		if params.Last != nil {
-			args = append(args, GraphQLArg{
+			args = append(args, graphQLArg{
 				Name:     "last",
 				Key:      "last",
 				TypeName: "Int",
@@ -104,14 +104,14 @@ func (client *Client) GetMany(base *Exec, params *WhereParams, typeNames [3]stri
 		}
 	}
 
-	var stack []Instruction
+	var stack []instruction
 	if base != nil {
-		stack = make([]Instruction, len(base.Stack), len(base.Stack)+1)
+		stack = make([]instruction, len(base.Stack), len(base.Stack)+1)
 		copy(stack, base.Stack)
 	}
-	stack = append(stack, Instruction{
+	stack = append(stack, instruction{
 		Name: instrName,
-		Field: GraphQLField{
+		Field: graphQLField{
 			Name:       instrName,
 			TypeName:   typeNames[2],
 			TypeFields: typeFields,

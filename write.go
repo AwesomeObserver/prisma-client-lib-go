@@ -2,7 +2,7 @@ package prisma
 
 type BatchPayloadExec struct {
 	client *Client
-	stack  []Instruction
+	stack  []instruction
 }
 
 type BatchPayload struct {
@@ -15,15 +15,15 @@ type UpdateParams struct {
 }
 
 func (client *Client) UpdateMany(params UpdateParams, typeNames [2]string, instrName string) *BatchPayloadExec {
-	var args []GraphQLArg
-	args = append(args, GraphQLArg{
+	var args []graphQLArg
+	args = append(args, graphQLArg{
 		Name:     "data",
 		Key:      "data",
 		TypeName: typeNames[0],
 		Value:    params.Data,
 	})
 	if params.Where != nil {
-		args = append(args, GraphQLArg{
+		args = append(args, graphQLArg{
 			Name:     "where",
 			Key:      "where",
 			TypeName: typeNames[1],
@@ -31,9 +31,9 @@ func (client *Client) UpdateMany(params UpdateParams, typeNames [2]string, instr
 		})
 	}
 
-	stack := []Instruction{{
+	stack := []instruction{{
 		Name: instrName,
-		Field: GraphQLField{
+		Field: graphQLField{
 			Name:       instrName,
 			TypeName:   "BatchPayload",
 			TypeFields: []string{"count"},
@@ -49,23 +49,23 @@ func (client *Client) UpdateMany(params UpdateParams, typeNames [2]string, instr
 }
 
 func (client *Client) Update(params UpdateParams, typeNames [3]string, instrName string, typeFields []string) *Exec {
-	var args []GraphQLArg
-	args = append(args, GraphQLArg{
+	var args []graphQLArg
+	args = append(args, graphQLArg{
 		Name:     "data",
 		Key:      "data",
 		TypeName: typeNames[0],
 		Value:    params.Data,
 	})
-	args = append(args, GraphQLArg{
+	args = append(args, graphQLArg{
 		Name:     "where",
 		Key:      "where",
 		TypeName: typeNames[1],
 		Value:    params.Where,
 	})
 
-	stack := []Instruction{{
+	stack := []instruction{{
 		Name: instrName,
-		Field: GraphQLField{
+		Field: graphQLField{
 			Name:       instrName,
 			TypeName:   typeNames[2],
 			TypeFields: typeFields,
@@ -81,16 +81,16 @@ func (client *Client) Update(params UpdateParams, typeNames [3]string, instrName
 }
 
 func (client *Client) DeleteMany(params interface{}, typeName string, instrName string) *BatchPayloadExec {
-	args := []GraphQLArg{{
+	args := []graphQLArg{{
 		Name:     "where",
 		Key:      "where",
 		TypeName: typeName,
 		Value:    params,
 	}}
 
-	stack := []Instruction{{
+	stack := []instruction{{
 		Name: instrName,
-		Field: GraphQLField{
+		Field: graphQLField{
 			Name:       instrName,
 			TypeName:   "BatchPayload",
 			TypeFields: []string{"count"},
@@ -106,9 +106,9 @@ func (client *Client) DeleteMany(params interface{}, typeName string, instrName 
 }
 
 func (client *Client) Delete(params interface{}, typeNames [2]string, instrName string, typeFields []string) *Exec {
-	var args []GraphQLArg
+	var args []graphQLArg
 	if params != nil {
-		args = []GraphQLArg{{
+		args = []graphQLArg{{
 			Name:     "where",
 			Key:      "where",
 			TypeName: typeNames[0],
@@ -116,9 +116,9 @@ func (client *Client) Delete(params interface{}, typeNames [2]string, instrName 
 		}}
 	}
 
-	stack := []Instruction{{
+	stack := []instruction{{
 		Name: instrName,
-		Field: GraphQLField{
+		Field: graphQLField{
 			Name:       instrName,
 			TypeName:   typeNames[1],
 			TypeFields: typeFields,
@@ -134,9 +134,9 @@ func (client *Client) Delete(params interface{}, typeNames [2]string, instrName 
 }
 
 func (client *Client) Create(params interface{}, typeNames [2]string, instrName string, typeFields []string) *Exec {
-	var args []GraphQLArg
+	var args []graphQLArg
 	if params != nil {
-		args = append(args, GraphQLArg{
+		args = append(args, graphQLArg{
 			Name:     "data",
 			Key:      "data",
 			TypeName: typeNames[0],
@@ -144,9 +144,9 @@ func (client *Client) Create(params interface{}, typeNames [2]string, instrName 
 		})
 	}
 
-	stack := []Instruction{{
+	stack := []instruction{{
 		Name: instrName,
-		Field: GraphQLField{
+		Field: graphQLField{
 			Name:       instrName,
 			TypeName:   typeNames[1],
 			TypeFields: typeFields,
@@ -168,21 +168,21 @@ type UpsertParams struct {
 }
 
 func (client *Client) Upsert(params *UpsertParams, typeNames [4]string, instrName string, typeFields []string) *Exec {
-	var args []GraphQLArg
+	var args []graphQLArg
 	if params != nil {
-		args = append(args, GraphQLArg{
+		args = append(args, graphQLArg{
 			Name:     "where",
 			Key:      "where",
 			TypeName: typeNames[0],
 			Value:    params.Where,
 		})
-		args = append(args, GraphQLArg{
+		args = append(args, graphQLArg{
 			Name:     "create",
 			Key:      "create",
 			TypeName: typeNames[1],
 			Value:    params.Create,
 		})
-		args = append(args, GraphQLArg{
+		args = append(args, graphQLArg{
 			Name:     "update",
 			Key:      "update",
 			TypeName: typeNames[2],
@@ -190,9 +190,9 @@ func (client *Client) Upsert(params *UpsertParams, typeNames [4]string, instrNam
 		})
 	}
 
-	stack := []Instruction{{
+	stack := []instruction{{
 		Name: instrName,
-		Field: GraphQLField{
+		Field: graphQLField{
 			Name:       instrName,
 			TypeName:   typeNames[3],
 			TypeFields: typeFields,

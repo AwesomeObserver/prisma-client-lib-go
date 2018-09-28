@@ -90,29 +90,29 @@ type field interface {
 	isField()
 }
 
-type ScalarField struct {
+type scalarField struct {
 	name      string
 	arguments argumentList
 }
 
-func (f ScalarField) format(b *strings.Builder) {
+func (f scalarField) format(b *strings.Builder) {
 	b.WriteString(f.name)
 	f.arguments.format(b)
 }
 
-func (ScalarField) isField() {}
+func (scalarField) isField() {}
 
-type ObjectField struct {
+type objectField struct {
 	name      string
 	arguments argumentList
 	fields    fieldList
 }
 
-func (of *ObjectField) addField(f field) {
+func (of *objectField) addField(f field) {
 	of.fields = append(of.fields, f)
 }
 
-func (of ObjectField) format(b *strings.Builder) {
+func (of objectField) format(b *strings.Builder) {
 	b.WriteString(of.name)
 	of.arguments.format(b)
 	b.WriteString(" {\n")
@@ -120,4 +120,4 @@ func (of ObjectField) format(b *strings.Builder) {
 	b.WriteString("}")
 }
 
-func (ObjectField) isField() {}
+func (objectField) isField() {}

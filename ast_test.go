@@ -22,9 +22,9 @@ func TestFormatOperation(t *testing.T) {
 				name:      "foo",
 				arguments: []argument{{"$bar", "String!"}},
 				fields: []field{
-					ScalarField{name: "id"},
-					ScalarField{name: "weight", arguments: []argument{{"unit", `"lbs"`}}},
-					ObjectField{name: "parent", fields: []field{ScalarField{name: "id"}}},
+					scalarField{name: "id"},
+					scalarField{name: "weight", arguments: []argument{{"unit", `"lbs"`}}},
+					objectField{name: "parent", fields: []field{scalarField{name: "id"}}},
 				},
 			},
 			"query foo($bar: String!) {\nid\nweight(unit: \"lbs\")\nparent {\nid\n}\n}",
@@ -45,9 +45,9 @@ func BenchmarkFormatOperation(b *testing.B) {
 		name:      "foo",
 		arguments: []argument{{"$bar", "String!"}},
 		fields: []field{
-			ScalarField{name: "id"},
-			ScalarField{name: "weight", arguments: []argument{{"unit", `"lbs"`}}},
-			ObjectField{name: "parent", fields: []field{ScalarField{name: "id"}}},
+			scalarField{name: "id"},
+			scalarField{name: "weight", arguments: []argument{{"unit", `"lbs"`}}},
+			objectField{name: "parent", fields: []field{scalarField{name: "id"}}},
 		},
 	}
 	for i := 0; i < b.N; i++ {

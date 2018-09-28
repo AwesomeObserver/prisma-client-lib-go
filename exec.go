@@ -25,7 +25,7 @@ func (client *Client) decode(exec *Exec, data map[string]interface{}, v interfac
 }
 
 func (exec *Exec) buildQuery() (string, map[string]interface{}) {
-	var allArgs []GraphQLArg
+	var allArgs []graphQLArg
 	variables := make(map[string]interface{})
 	for i := range exec.Stack {
 		instruction := &exec.Stack[i]
@@ -91,7 +91,7 @@ func (exec *Exec) ExecArray(ctx context.Context, v interface{}) error {
 }
 
 func (instance *BatchPayloadExec) Exec(ctx context.Context) (BatchPayload, error) {
-	var allArgs []GraphQLArg
+	var allArgs []graphQLArg
 	variables := make(map[string]interface{})
 	for instructionKey := range instance.stack {
 		instruction := &instance.stack[instructionKey]
