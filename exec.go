@@ -7,21 +7,25 @@ import (
 	"github.com/mitchellh/mapstructure"
 )
 
-func (client *Client) decode(exec *Exec, data map[string]interface{}, v interface{}) error {
+func (client *Client) decode(exec *Exec, data map[string]interface{}, v interface{}) (bool, error) {
 	var genericData interface{} // This can handle both map[string]interface{} and []interface[]
 
 	unpackedData := data
 	for _, instruction := range exec.Stack {
-		if isArray(unpackedData[instruction.Name]) {
-			genericData = (unpackedData[instruction.Name]).([]interface{})
+		v := (unpackedData[instruction.Name])
+		if v == nil {
+			return false, nil
+		}
+		if isArray(v) {
+			genericData = v.([]interface{})
 			break
 		} else {
-			unpackedData = (unpackedData[instruction.Name]).(map[string]interface{})
+			unpackedData = v.(map[string]interface{})
 		}
 		genericData = unpackedData
 	}
 
-	return mapstructure.Decode(genericData, v)
+	return true, mapstructure.Decode(genericData, v)
 }
 
 func (exec *Exec) buildQuery() (string, map[string]interface{}) {
@@ -50,11 +54,14 @@ func (exec *Exec) buildQuery() (string, map[string]interface{}) {
 	return query, variables
 }
 
-func (exec *Exec) Exec(ctx context.Context, v interface{}) error {
+func (exec *Exec) Exec(ctx context.Context, v interface{}) (bool, error) {
 	query, variables := exec.buildQuery()
 	data, err := exec.Client.GraphQL(ctx, query, variables)
 	if err != nil {
-		return err
+		return false, err
+	}
+	if data == nil {
+		return false, nil
 	}
 
 	return exec.Client.decode(exec, data, v)
@@ -87,7 +94,8 @@ func (exec *Exec) ExecArray(ctx context.Context, v interface{}) error {
 	if err != nil {
 		return err
 	}
-	return exec.Client.decode(exec, data, v)
+	_, err = exec.Client.decode(exec, data, v)
+	return err
 }
 
 func (exec *BatchPayloadExec) Exec(ctx context.Context) (BatchPayload, error) {
@@ -100,6 +108,6 @@ func (exec *BatchPayloadExec) Exec(ctx context.Context) (BatchPayload, error) {
 	}
 
 	var bp BatchPayload
-	err = exec.client.decode(sexec, data, &bp)
+	_, err = exec.client.decode(sexec, data, &bp)
 	return bp, err
 }
