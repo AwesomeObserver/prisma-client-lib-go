@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"reflect"
 
+	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/machinebox/graphql"
 )
 
@@ -46,24 +47,42 @@ func isArray(i interface{}) bool {
 	}
 }
 
-func New(endpoint string, opts ...graphql.ClientOption) *Client {
+func New(endpoint string, secret string, opts ...graphql.ClientOption) *Client {
+
+	var tokenString string
+	if secret != "" {
+		token := jwt.New(jwt.SigningMethodHS256)
+		signedToken, err := token.SignedString([]byte(secret))
+		if err != nil {
+			fmt.Println("Failed to sign JWT token")
+			panic(err)
+		}
+		tokenString = signedToken
+	}
+
 	return &Client{
 		Endpoint:  endpoint,
+		Secret:    tokenString,
 		GQLClient: graphql.NewClient(endpoint, opts...),
 	}
 }
 
 type Client struct {
 	Endpoint string
+	Secret   string
 	// TODO(dh): find a better name for this field
 	GQLClient *graphql.Client
 }
 
 // GraphQL Send a GraphQL operation request
 func (client *Client) GraphQL(ctx context.Context, query string, variables map[string]interface{}) (map[string]interface{}, error) {
-	// TODO: Add auth support
 
 	req := graphql.NewRequest(query)
+
+	if client.Secret != "" {
+		req.Header.Add("Authorization", "Bearer "+client.Secret)
+	}
+
 	for key, value := range variables {
 		req.Var(key, value)
 	}
