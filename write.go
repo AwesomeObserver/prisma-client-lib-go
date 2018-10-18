@@ -55,13 +55,13 @@ func (client *Client) Update(params UpdateParams, typeNames [3]string, instrName
 		Key:      "data",
 		TypeName: typeNames[0],
 		Value:    params.Data,
-	})
-	args = append(args, graphQLArg{
-		Name:     "where",
-		Key:      "where",
-		TypeName: typeNames[1],
-		Value:    params.Where,
-	})
+	},
+		graphQLArg{
+			Name:     "where",
+			Key:      "where",
+			TypeName: typeNames[1],
+			Value:    params.Where,
+		})
 
 	stack := []instruction{{
 		Name: instrName,
@@ -175,19 +175,19 @@ func (client *Client) Upsert(params *UpsertParams, typeNames [4]string, instrNam
 			Key:      "where",
 			TypeName: typeNames[0],
 			Value:    params.Where,
-		})
-		args = append(args, graphQLArg{
-			Name:     "create",
-			Key:      "create",
-			TypeName: typeNames[1],
-			Value:    params.Create,
-		})
-		args = append(args, graphQLArg{
-			Name:     "update",
-			Key:      "update",
-			TypeName: typeNames[2],
-			Value:    params.Update,
-		})
+		},
+			graphQLArg{
+				Name:     "create",
+				Key:      "create",
+				TypeName: typeNames[1],
+				Value:    params.Create,
+			},
+			graphQLArg{
+				Name:     "update",
+				Key:      "update",
+				TypeName: typeNames[2],
+				Value:    params.Update,
+			})
 	}
 
 	stack := []instruction{{
